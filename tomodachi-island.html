@@ -151,6 +151,14 @@ const BUILDINGS = [
 // ★★ じゅうみんカード（ほかの しまと やりとり）★★
 const CARD_PREFIX = "TOMO1:";
 
+// ★ しまの なまえの こうほ（まよったら これ）★
+const ISLAND_NAME_POOL = [
+  "ともだちじま", "きらきらじま", "にじいろじま", "わくわくアイランド",
+  "そらのしま", "たからじま", "ひみつのしま", "ゆめのしま",
+  "みどりのしま", "げんきじま", "しあわせじま", "ぼうけんじま",
+];
+const DEFAULT_ISLAND_NAME = "ともだちじま";
+
 // にほんごも あつかえる Base64
 // ★ URLセーフ版（+ / = を つかわない）→ LINEや メールで こわれにくい
 function toB64(str) {
@@ -165,8 +173,9 @@ function fromB64(b64) {
 }
 
 // じゅうみん → カード（もじれつ）
-function encodeCard(r) {
+function encodeCard(r, islandName) {
   const data = {
+    i: islandName || DEFAULT_ISLAND_NAME,   // ★ どこの しまから きたか
     n: r.name,
     p: r.personality,
     a: r.avatar,
@@ -250,7 +259,8 @@ function decodeCard(text, spot) {
     parents: null,
     babyCooldown: 0,
     homeSpot: spot,
-    fromOtherIsland: true,   // ★ よその しまから きた しるし
+    fromOtherIsland: true,                                   // ★ よその しまから きた しるし
+    fromIsland: String(d.i || "なぞの しま").slice(0, 12),   // ★ どこの しまから きたか
   };
 }
 
@@ -768,6 +778,8 @@ function TomodachiIsland() {
   const [cardOut, setCardOut] = useState("");      // おくる カード
   const [cardIn, setCardIn] = useState("");        // うけとった カード
   const [cardErr, setCardErr] = useState("");     // カードの エラー
+  const [islandName, setIslandName] = useState(DEFAULT_ISLAND_NAME); // ★ しまの なまえ
+  const [naming, setNaming] = useState(false);   // なまえを つける がめん
   const toastTimer = useRef(null);
   const prevUnlocked = useRef(0);
 
@@ -802,10 +814,15 @@ function TomodachiIsland() {
           setTravelers(d.travelers ?? []);
           setDay(d.day ?? 0);
           setPhotos(d.photos ?? []);
+          if (d.islandName) setIslandName(d.islandName);
+          else if ((d.residents ?? []).length === 0) setNaming(true); // はじめての ひとは なまえを つける
           if (typeof d.soundOn === "boolean") setSoundOn(d.soundOn);
         }
+        else {
+          setNaming(true);   // ★ はじめて あそぶ ひと
+        }
       } catch (e) {
-        // セーブデータなし（初回起動）
+        setNaming(true);     // ★ セーブが ない＝はじめて
       }
       setLoaded(true);
     })();
@@ -814,20 +831,20 @@ function TomodachiIsland() {
   // ★セーブ本体（silent=trueなら だまって ほぞん）
   const saveNow = useCallback(async (silent) => {
     try {
-      await gameStorage.set(SAVE_KEY, JSON.stringify({ coins, residents, relations, log, objects, soundOn, travelers, day, photos }));
+      await gameStorage.set(SAVE_KEY, JSON.stringify({ coins, residents, relations, log, objects, soundOn, travelers, day, photos, islandName }));
       setLastSaved(Date.now());
       if (!silent) showToast("💾 セーブしたよ！ また あとで つづきから あそべる");
     } catch (e) {
       if (!silent) showToast("セーブ できなかった…もういちど ためしてね");
     }
-  }, [coins, residents, relations, log, objects, soundOn, travelers, day, photos, showToast]);
+  }, [coins, residents, relations, log, objects, soundOn, travelers, day, photos, islandName, showToast]);
 
   // じどうセーブ（なにか かわったら 0.8びょうご）
   useEffect(() => {
     if (!loaded) return;
     const timer = setTimeout(() => { saveNow(true); }, 800);
     return () => clearTimeout(timer);
-  }, [coins, residents, relations, log, objects, soundOn, travelers, day, photos, loaded, saveNow]);
+  }, [coins, residents, relations, log, objects, soundOn, travelers, day, photos, islandName, loaded, saveNow]);
 
   // ---- 時間経過 ----
   useEffect(() => {
@@ -987,6 +1004,11 @@ function TomodachiIsland() {
     }, 12000);
     return () => clearInterval(iv);
   }, [loaded, addLog, showToast]);
+
+  // ★ ブラウザの タブにも しまの なまえを だす ★
+  useEffect(() => {
+    document.title = `🏝️ ${islandName}`;
+  }, [islandName]);
 
   // ★ きせつ ★
   const season = SEASONS[Math.floor(day / 15) % SEASONS.length];
@@ -1358,7 +1380,7 @@ function TomodachiIsland() {
   const makeCard = (id) => {
     const r = residents.find((x) => x.id === id);
     if (!r) return;
-    const code = encodeCard(r);
+    const code = encodeCard(r, islandName);
     setCardOut(code);
     addLog(`📮 ${r.name}の じゅうみんカードを つくった！`);
     showToast(`📮 ${r.name}の カードが できた！ コピーして おくろう`);
@@ -1388,13 +1410,13 @@ function TomodachiIsland() {
 
   // ★★ しまごと バックアップ（ファイルに かきだす）★★
   const exportIsland = () => {
-    const data = { coins, residents, relations, log, objects, soundOn, travelers, day, photos, savedAt: new Date().toISOString() };
+    const data = { coins, residents, relations, log, objects, soundOn, travelers, day, photos, islandName, savedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     const d = new Date();
     a.href = url;
-    a.download = `ともだちアイランド_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.json`;
+    a.download = `${islandName}_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     addLog("🗂️ しまの バックアップを かきだした！");
@@ -1418,6 +1440,7 @@ function TomodachiIsland() {
         setTravelers(d.travelers ?? []);
         setDay(d.day ?? 0);
         setPhotos(d.photos ?? []);
+        if (d.islandName) setIslandName(d.islandName);
         if (typeof d.soundOn === "boolean") setSoundOn(d.soundOn);
         showToast("🗂️ しまが もどったよ！ おかえり！");
         addLog("🗂️ バックアップから しまを ふっかつさせた！");
@@ -1470,8 +1493,8 @@ function TomodachiIsland() {
     setCardErr("");
     stopSpeaking();
     speakAs(nr, "はじめまして！ よその しまから きました！");
-    addLog(`🌏 よその しまから ${nr.name}が やってきた！ なかまに なったよ`);
-    showToast(`🌏 ${nr.name}が しまに ひっこして きた！`);
+    addLog(`🌏 「${nr.fromIsland}」から ${nr.name}が やってきた！ なかまに なったよ`);
+    showToast(`🌏 ${nr.fromIsland}の ${nr.name}が ひっこして きた！`);
   };
 
   // ★ しまに オブジェを おく ★
@@ -1589,9 +1612,22 @@ function TomodachiIsland() {
 
       {/* ヘッダー */}
       <header style={{ maxWidth: 480, margin: "0 auto", padding: "16px 16px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 900, margin: 0, textShadow: "0 2px 0 rgba(255,255,255,0.7)" }}>
-          🏝️ ともだちアイランド
-        </h1>
+        <button
+          onClick={() => setNaming(true)}
+          style={{
+            fontFamily: "inherit", background: "none", border: "none",
+            padding: 0, cursor: "pointer", textAlign: "left", minWidth: 0,
+          }}
+          aria-label="しまの なまえを かえる"
+        >
+          <h1 style={{
+            fontSize: 20, fontWeight: 900, margin: 0,
+            textShadow: "0 2px 0 rgba(255,255,255,0.7)", color: "#4A4238",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            🏝️ {islandName} ✏️
+          </h1>
+        </button>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ background: "#FFFDF5", border: "3px solid #4A4238", borderRadius: 20, padding: "5px 12px", fontWeight: 900, fontSize: 15, boxShadow: "0 3px 0 #4A4238" }}>
             🪙 {coins}
@@ -1750,6 +1786,7 @@ function TomodachiIsland() {
             visitor={visitor}
             onVisitor={() => setBuilding("visitor")}
             onHouse={(spot) => setHouseSpot(spot)}
+            islandName={islandName}
           />
         )}
 
@@ -1946,6 +1983,24 @@ function TomodachiIsland() {
               addLog(`🌟 ${nr.name}が しまに ひっこして きた！`);
               showToast(`${nr.name}が なかまに くわわった！`);
               setCreating(false);
+            }}
+          />
+        </Modal>
+      )}
+
+      {/* ===== ★★ しまの なまえを つける ★★ ===== */}
+      {naming && (
+        <Modal onClose={() => setNaming(false)}>
+          <IslandNameForm
+            current={islandName}
+            onSave={(nm) => {
+              const before = islandName;
+              setIslandName(nm);
+              setNaming(false);
+              if (before !== nm) {
+                addLog(`🏝️ しまの なまえが「${nm}」に なった！`);
+                showToast(`🏝️ ようこそ「${nm}」へ！`);
+              }
             }}
           />
         </Modal>
@@ -2157,7 +2212,7 @@ function ResidentRoom({ r, bubble, friends, picker, setPicker, coins, onFeed, on
           )}
           {r.fromOtherIsland && (
             <div style={{ fontSize: 11, fontWeight: 800, color: "#4A8BC4", marginTop: 1 }}>
-              🌏 よその しまから きた こ
+              🌏 「{r.fromIsland || "なぞの しま"}」から きた こ
             </div>
           )}
           <div style={{ fontSize: 13, fontWeight: 800, marginTop: 4 }}>
@@ -2306,7 +2361,7 @@ const ACTIVITIES = [
   "かいがらを さがしてる🐚", "ひなたぼっこ ちゅう☀️",
 ];
 
-function IslandView({ residents, onSelect, onAdd, onBuilding, workReady, objects, editMode, onPlaceObject, onRemoveObject, onLocked, season, visitor, onVisitor, onHouse }) {
+function IslandView({ residents, onSelect, onAdd, onBuilding, workReady, objects, editMode, onPlaceObject, onRemoveObject, onLocked, season, visitor, onVisitor, onHouse, islandName }) {
   const [pos, setPos] = useState({});
   const [act, setAct] = useState({});
   const [talker, setTalker] = useState(null);
@@ -2576,7 +2631,7 @@ function IslandView({ residents, onSelect, onAdd, onBuilding, workReady, objects
         background: "#FFFDF5", border: "3px solid #4A4238", borderRadius: 12,
         padding: "2px 10px", fontWeight: 900, fontSize: 12, whiteSpace: "nowrap", zIndex: 5,
       }}>
-        🏝️ ともだちじま
+        🏝️ {islandName}
       </div>
 
       {/* じゅうみんたち（おさんぽちゅう） */}
@@ -3373,7 +3428,10 @@ function BuildingPanel({ building, residents, relations, travelers, coins, workR
         <>
           <p style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.6, margin: "0 0 12px", color: "#6B5F50" }}>
             じゅうみんを <b>「カード」</b>に して、よその しまに おくれるよ！<br />
-            LINEや メールで もじを おくるだけ 📮
+            LINEや メールで もじを おくるだけ 📮<br />
+            <span style={{ fontSize: 11, color: "#8A7E6E" }}>
+              ※ カードには <b>きみの しまの なまえ</b>も いっしょに つくよ 🏝️
+            </span>
           </p>
 
           {/* --- おくる --- */}
@@ -3575,6 +3633,100 @@ function FacilityPick({ note, residents, coins, cost, onPick, actionLabel }) {
         ))}
       </div>
     </>
+  );
+}
+
+// ============ しまの なまえを つける ============
+function IslandNameForm({ current, onSave }) {
+  const [name, setName] = useState(current === DEFAULT_ISLAND_NAME ? "" : current);
+  const isFirst = current === DEFAULT_ISLAND_NAME;
+
+  const submit = () => {
+    const nm = name.trim().slice(0, 12) || pick(ISLAND_NAME_POOL);
+    onSave(nm);
+  };
+
+  return (
+    <div style={{ padding: "18px 18px 20px" }}>
+      <div style={{ fontSize: 19, fontWeight: 900, marginBottom: 6 }}>
+        🏝️ しまの なまえを つけよう
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#8A7E6E", marginBottom: 14, lineHeight: 1.6 }}>
+        {isFirst
+          ? "きみだけの しまの なまえを きめてね！\nともだちに じゅうみんを おくると、この なまえも いっしょに つたわるよ 📮"
+          : "なまえは いつでも かえられるよ"}
+      </div>
+
+      {/* かんばんの プレビュー */}
+      <div style={{
+        background: "linear-gradient(180deg, #9ED8F0 0%, #BDE6A8 100%)",
+        border: "3px solid #4A4238", borderRadius: 16,
+        padding: "18px 10px", marginBottom: 14, textAlign: "center",
+      }}>
+        <div style={{
+          display: "inline-block",
+          background: "#FFFDF5", border: "3px solid #4A4238", borderRadius: 12,
+          padding: "4px 14px", fontWeight: 900, fontSize: 15,
+          boxShadow: "0 3px 0 #4A4238",
+        }}>
+          🏝️ {name.trim() || DEFAULT_ISLAND_NAME}
+        </div>
+      </div>
+
+      {/* にゅうりょく */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
+          なまえ（12もじまで）
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value.slice(0, 12))}
+            onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+            placeholder="れい: きらきらじま"
+            autoFocus
+            style={{
+              flex: 1, fontFamily: "inherit", fontWeight: 700, fontSize: 16,
+              border: "3px solid #4A4238", borderRadius: 14, padding: "9px 12px",
+              background: "#FFFDF5", color: "#4A4238", minWidth: 0,
+            }}
+          />
+          <ChunkyButton small color="#FFFDF5" onClick={() => setName(pick(ISLAND_NAME_POOL))}>
+            🎲
+          </ChunkyButton>
+        </div>
+      </div>
+
+      {/* こうほ */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 6, color: "#8A7E6E" }}>
+          こんなのは どう？
+        </div>
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+          {ISLAND_NAME_POOL.slice(0, 6).map((nm) => (
+            <button
+              key={nm}
+              onClick={() => setName(nm)}
+              style={{
+                fontFamily: "inherit", fontWeight: 800, fontSize: 11,
+                padding: "5px 10px", borderRadius: 14,
+                border: "2px solid #4A4238",
+                background: name === nm ? "#FFD666" : "#FFFDF5",
+                cursor: "pointer", color: "#4A4238",
+              }}
+            >
+              {nm}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ textAlign: "center" }}>
+        <ChunkyButton color="#9BE3B0" onClick={submit}>
+          {isFirst ? "🏝️ この なまえで はじめる！" : "✅ この なまえに する"}
+        </ChunkyButton>
+      </div>
+    </div>
   );
 }
 
