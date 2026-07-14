@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ★ けんさくよけ：Googleなどに のらない（URLを しってる ひとだけ）★ -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<title>ともだちコレクション</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "Hiragino Maru Gothic ProN", "BIZ UDGothic", "Yu Gothic", sans-serif;
+    background: linear-gradient(180deg, #7EC8E3 0%, #B8E4F0 60%, #A8E6A1 60%, #8FD687 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    user-select: none;
+  }
+  h1 {
+    color: #fff;
+    font-size: 1.6rem;
+    text-shadow: 2px 3px 0 #4A9BC4;
+    margin: 8px 0 4px;
+    letter-spacing: 2px;
+  }
+  .counter {
+    background: #FFF6C9;
+    border: 3px solid #F5C542;
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-weight: bold;
+    color: #8A6D00;
+    margin-bottom: 12px;
+    font-size: 1rem;
+  }
+  .scene {
+    background: rgba(255,255,255,0.85);
+    border-radius: 24px;
+    padding: 20px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.12);
+  }
+  .place-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+  button {
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    transition: transform 0.08s;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+  .place-btn { background: #FFD25E; color: #7A5A00; }
+  .greet-btn { background: #8ED0F5; color: #084E75; margin: 6px; }
+  .book-btn { background: #F79ECF; color: #7A0F4E; margin-top: 14px; }
+  .back-btn { background: #C9C9C9; color: #444; margin-top: 14px; }
+  .char { font-size: 5rem; margin: 10px 0; animation: bounce 1s infinite; display: inline-block; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .msg { font-size: 1.1rem; color: #333; margin: 10px 0; min-height: 3em; line-height: 1.6; }
+  .name { font-size: 1.3rem; font-weight: bold; color: #E86AA6; }
+  .rare { color: #B8860B; font-weight: bold; }
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .slot {
+    aspect-ratio: 1;
+    background: #F2EFE6;
+    border: 2px dashed #C9C2AD;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+  }
+  .slot.found { background: #FFF9D9; border: 2px solid #F5C542; }
+  .slot small { font-size: 0.55rem; color: #7A6A30; margin-top: 2px; }
+  .slot.empty small { color: #BBB; }
+  .confetti { font-size: 1.5rem; letter-spacing: 4px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <h1>🌟 ともだちコレクション 🌟</h1>
+  <div class="counter">ともだち: <span id="count">0</span> / 12 にん</div>
+
+  <!-- さがす画面 -->
+  <div class="scene" id="searchScene">
+    <p class="msg">どこで ともだちを さがす?</p>
+    <div class="place-buttons">
+      <button class="place-btn" onclick="explore('park')">🌳 こうえん</button>
+      <button class="place-btn" onclick="explore('sea')">🌊 うみ</button>
+      <button class="place-btn" onclick="explore('mountain')">⛰️ やま</button>
+    </div>
+    <button class="book-btn" onclick="showBook()">📖 ずかんを みる</button>
+  </div>
+
+  <!-- 出会い画面 -->
+  <div class="scene hidden" id="meetScene">
+    <div class="char" id="charEmoji"></div>
+    <p class="msg" id="meetMsg"></p>
+    <div id="greetButtons">
+      <button class="greet-btn" onclick="greet(0)">👋 こんにちは!</button>
+      <button class="greet-btn" onclick="greet(1)">🎁 プレゼントをあげる</button>
+      <button class="greet-btn" onclick="greet(2)">😊 にっこりする</button>
+    </div>
+    <button class="back-btn hidden" id="continueBtn" onclick="backToSearch()">つぎへ →</button>
+  </div>
+
+  <!-- ずかん画面 -->
+  <div class="scene hidden" id="bookScene">
+    <p class="msg">📖 ともだちずかん</p>
+    <div class="book-grid" id="bookGrid"></div>
+    <p class="msg hidden" id="completeMsg">🎉 コンプリート! すごい!! 🎉</p>
+    <button class="back-btn" onclick="backToSearch()">← もどる</button>
+    <button class="back-btn" onclick="resetAll()">🔄 さいしょから</button>
+  </div>
+
+<script>
+const friends = [
+  { emoji: "🐶", name: "ワンタ", place: "park", like: 0, rare: false },
+  { emoji: "🐱", name: "ニャーコ", place: "park", like: 2, rare: false },
+  { emoji: "🐰", name: "ピョンきち", place: "park", like: 1, rare: false },
+  { emoji: "🦄", name: "ユニりん", place: "park", like: 2, rare: true },
+  { emoji: "🐬", name: "イルカくん", place: "sea", like: 0, rare: false },
+  { emoji: "🐙", name: "タコすけ", place: "sea", like: 1, rare: false },
+  { emoji: "🐢", name: "カメじい", place: "sea", like: 2, rare: false },
+  { emoji: "🧜", name: "マーメイ", place: "sea", like: 0, rare: true },
+  { emoji: "🐻", name: "クマごろう", place: "mountain", like: 1, rare: false },
+  { emoji: "🦊", name: "コンきち", place: "mountain", like: 0, rare: false },
+  { emoji: "🦉", name: "フクじい", place: "mountain", like: 2, rare: false },
+  { emoji: "🐉", name: "ドラゴりん", place: "mountain", like: 1, rare: true },
+];
+
+// ▼ あつめた ともだちを ほぞんする（ブラウザを とじても きえない）
+const SAVE_KEY = "tomodachi_collection";
+
+function load() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SAVE_KEY)) || []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function save() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify([...collected]));
+  } catch (e) {
+    // ほぞんできなくても ゲームは つづけられる
+  }
+}
+
+const collected = load();
+let current = null;
+
+// さいしょに あつめた かずを ひょうじ
+document.getElementById("count").textContent = collected.size;
+
+// ぜんぶ さいしょから やりなおしたい とき
+function resetAll() {
+  if (confirm("ともだちを ぜんぶ わすれて、さいしょから やりなおす?")) {
+    collected.clear();
+    save();
+    document.getElementById("count").textContent = 0;
+    showBook();
+  }
+}
+
+function show(id) {
+  ["searchScene", "meetScene", "bookScene"].forEach(s =>
+    document.getElementById(s).classList.toggle("hidden", s !== id));
+}
+
+function explore(place) {
+  const pool = friends.filter(f => f.place === place);
+  // レアは3回に1回くらいしか出ない
+  let pick;
+  do {
+    pick = pool[Math.floor(Math.random() * pool.length)];
+  } while (pick.rare && Math.random() < 0.6);
+  current = pick;
+  document.getElementById("charEmoji").textContent = pick.emoji;
+  const already = collected.has(pick.name);
+  document.getElementById("meetMsg").innerHTML =
+    (pick.rare ? '<span class="rare">✨レアともだち✨</span><br>' : "") +
+    `<span class="name">${pick.name}</span> が あらわれた!<br>` +
+    (already ? "(もう ともだちだよ! もういちど あいさつしてみよう)" : "どうやって なかよくなる?");
+  document.getElementById("greetButtons").classList.remove("hidden");
+  document.getElementById("continueBtn").classList.add("hidden");
+  show("meetScene");
+}
+
+function greet(choice) {
+  const success = choice === current.like || Math.random() < 0.4;
+  const msgEl = document.getElementById("meetMsg");
+  if (success) {
+    const isNew = !collected.has(current.name);
+    collected.add(current.name);
+    save();
+    document.getElementById("count").textContent = collected.size;
+    msgEl.innerHTML =
+      `<span class="confetti">🎉✨🎉</span><br>` +
+      `<span class="name">${current.name}</span> と ともだちに なった!` +
+      (isNew ? "<br>ずかんに とうろくされたよ 📖" : "<br>もっと なかよしに なったよ 💕");
+  } else {
+    msgEl.innerHTML =
+      `あれれ… <span class="name">${current.name}</span> は はずかしがってるみたい 💦<br>また あいに きてね!`;
+  }
+  document.getElementById("greetButtons").classList.add("hidden");
+  document.getElementById("continueBtn").classList.remove("hidden");
+}
+
+function showBook() {
+  const grid = document.getElementById("bookGrid");
+  grid.innerHTML = "";
+  friends.forEach(f => {
+    const div = document.createElement("div");
+    const found = collected.has(f.name);
+    div.className = "slot " + (found ? "found" : "empty");
+    div.innerHTML = found
+      ? `${f.emoji}<small>${f.name}</small>`
+      : `❓<small>???</small>`;
+    grid.appendChild(div);
+  });
+  document.getElementById("completeMsg").classList.toggle("hidden", collected.size < friends.length);
+  show("bookScene");
+}
+
+function backToSearch() { show("searchScene"); }
+</script>
+</body>
+</html>

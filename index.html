@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- ★ けんさくよけ：Googleなどに のらない（URLを しってる ひとだけ）★ -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<title>ゆうくんの ゲームずかん</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ゲームずかん">
+<meta name="theme-color" content="#7EC8E3">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%237EC8E3'/%3E%3Ctext y='132' x='90' font-size='110' text-anchor='middle'%3E🎮%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E🎮%3C/text%3E%3C/svg%3E">
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: "Hiragino Maru Gothic ProN", "BIZ UDGothic", "Yu Gothic", sans-serif;
+    background: linear-gradient(180deg, #7EC8E3 0%, #B8E4F0 45%, #A8E6A1 45%, #8FD687 100%);
+    min-height: 100vh;
+    color: #4A4238;
+    padding: 24px 16px calc(40px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  a { text-decoration: none; color: inherit; touch-action: manipulation; }
+
+  h1 {
+    font-size: 1.7rem;
+    color: #fff;
+    text-shadow: 2px 3px 0 #4A9BC4;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .sub {
+    background: #FFF6C9;
+    border: 3px solid #F5C542;
+    border-radius: 999px;
+    padding: 5px 16px;
+    font-weight: bold;
+    color: #8A6D00;
+    font-size: 0.85rem;
+    margin-bottom: 22px;
+  }
+
+  .grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #FFFDF5;
+    border: 4px solid #4A4238;
+    border-radius: 20px;
+    padding: 14px;
+    box-shadow: 0 6px 0 #4A4238;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .card:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #4A4238;
+  }
+
+  .icon {
+    flex-shrink: 0;
+    width: 66px;
+    height: 66px;
+    border-radius: 16px;
+    border: 3px solid #4A4238;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.1rem;
+  }
+  .i1 { background: #9BE3B0; }
+  .i2 { background: #FFD25E; }
+  .i3 { background: #8ED0F5; }
+
+  .body { min-width: 0; flex: 1; }
+  .name { font-size: 1.15rem; font-weight: 900; margin-bottom: 3px; }
+  .desc { font-size: 0.78rem; color: #8A7E6E; line-height: 1.5; font-weight: bold; }
+  .badge {
+    display: inline-block;
+    background: #FFE2E8;
+    border: 2px solid #E86AA6;
+    color: #B03A6A;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    margin-top: 5px;
+  }
+  .go { font-size: 1.5rem; color: #4A4238; flex-shrink: 0; }
+
+  footer {
+    margin-top: 26px;
+    text-align: center;
+    font-size: 0.72rem;
+    color: #4A6B50;
+    font-weight: bold;
+    line-height: 1.8;
+    max-width: 400px;
+  }
+  .tip {
+    background: rgba(255,253,245,0.85);
+    border: 2px dashed #4A4238;
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-top: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <h1>🎮 ゆうくんの ゲームずかん</h1>
+  <div class="sub">AIと いっしょに つくった ゲーム</div>
+
+  <div class="grid">
+
+    <a class="card" href="tomodachi-island.html">
+      <div class="icon i1">🏝️</div>
+      <div class="body">
+        <div class="name">ともだちアイランド</div>
+        <div class="desc">
+          じゅうみんを つくって しまを そだてよう。こいをして、けっこんして、あかちゃんが うまれて、たびに でる。
+        </div>
+        <span class="badge">★ だいさくひん</span>
+      </div>
+      <div class="go">▶</div>
+    </a>
+
+    <a class="card" href="tomodachi-collection.html">
+      <div class="icon i2">🌟</div>
+      <div class="body">
+        <div class="name">ともだちコレクション</div>
+        <div class="desc">
+          こうえん・うみ・やまで ともだちを さがそう。12にん あつめて ずかんを コンプリート！
+        </div>
+      </div>
+      <div class="go">▶</div>
+    </a>
+
+    <a class="card" href="hoshiatsume.html">
+      <div class="icon i3">⭐</div>
+      <div class="body">
+        <div class="name">ほしあつめ</div>
+        <div class="desc">
+          やじるしキーで ロケットを うごかして、ほしを あつめよう。
+        </div>
+      </div>
+      <div class="go">▶</div>
+    </a>
+
+  </div>
+
+  <footer>
+    <div class="tip">
+      📱 スマホ・タブレットの ひとへ<br>
+      きょうゆうボタン →「ホームがめんに ついか」で<br>
+      アプリみたいに あそべるよ！
+    </div>
+  </footer>
+
+</body>
+</html>
