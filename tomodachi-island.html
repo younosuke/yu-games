@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- ★ けんさくよけ：Googleなどに のらない（URLを しってる ひとだけ）★ -->
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 <meta name="googlebot" content="noindex, nofollow">
 <title>ともだちアイランド</title>
@@ -146,6 +145,7 @@ const BUILDINGS = [
   { id: "hotel",   emoji: "🏨", label: "しまホテル",         x: 24, y: 70, color: "#F79ECF", unlockAt: 7 },
   { id: "museum",  emoji: "🖼️", label: "びじゅつかん",       x: 78, y: 45, color: "#9BE3B0", unlockAt: 9 },
   { id: "post",    emoji: "📮", label: "こうかんポスト",     x: 26, y: 86, color: "#FF8FA3", unlockAt: 1 },
+  { id: "company", emoji: "🏢", label: "しまカンパニー",     x: 74, y: 86, color: "#8FC3F7", unlockAt: 1 },
 ];
 
 // ★★ じゅうみんカード（ほかの しまと やりとり）★★
@@ -301,17 +301,36 @@ const SEASONS = [
   { id: 3, label: "ふゆ", emoji: "⛄", sky: "#DCEBF5", ground: "#E4EDE4" },
 ];
 
-// ★★ きせつの イベント ★★
+// ★★ じかんたい（あさ・ひる・ゆうがた・よる）★★
+// day を 4つに わけて じかんが すすむ
+const TIMES = [
+  { id: "morning", label: "あさ",    emoji: "🌅", sky: "#FFE0B8", overlay: "rgba(255,220,150,0.12)" },
+  { id: "noon",    label: "ひる",    emoji: "☀️", sky: "#BFE9FF", overlay: "rgba(255,255,255,0.0)" },
+  { id: "evening", label: "ゆうがた", emoji: "🌇", sky: "#FFC48F", overlay: "rgba(255,140,80,0.16)" },
+  { id: "night",   label: "よる",    emoji: "🌙", sky: "#3A4A80", overlay: "rgba(20,20,60,0.42)" },
+];
+
+// ★★ きせつ ＆ じかんたいの イベント ★★
+// season: 0-3 or null（いつでも）  time: じかんID or null（いつでも）
 const EVENTS = [
-  { id: "hanami",  emoji: "🌸", name: "おはなみ",                 season: 0, msg: "さくらが きれいだね！",        happy: 22, exp: 8,  bond: 6,  hunger: 10, photo: true },
-  { id: "hanabi",  emoji: "🎆", name: "はなびたいかい",           season: 1, msg: "よぞらに はなびが あがる！",  happy: 30, exp: 5,  bond: 10, hunger: 0,  photo: true },
-  { id: "momiji",  emoji: "🍁", name: "もみじがり",               season: 2, msg: "やまが まっかだ〜！",          happy: 22, exp: 8,  bond: 6,  hunger: 0,  photo: true },
-  { id: "yuki",    emoji: "⛄", name: "ゆきまつり",               season: 3, msg: "ゆきだるまを つくろう！",      happy: 25, exp: 8,  bond: 8,  hunger: 0,  photo: true },
-  { id: "magic",   emoji: "🎩", name: "こうえんの マジックショー", season: null, msg: "うわー！ どうなってるの!?", happy: 20, exp: 12, bond: 4,  hunger: 0,  photo: false },
-  { id: "photo",   emoji: "📷", name: "カメラマンが きた！",       season: null, msg: "はい、チーズ！ 📸",         happy: 16, exp: 5,  bond: 8,  hunger: 0,  photo: true },
-  { id: "dinner",  emoji: "🍽️", name: "ホテルの おしょくじかい",  season: null, msg: "ごうかな ディナー！",       happy: 20, exp: 5,  bond: 6,  hunger: 45, photo: true },
-  { id: "art",     emoji: "🖼️", name: "びじゅつひん かんしょうかい", season: null, msg: "すてきな えだね…",       happy: 12, exp: 30, bond: 3,  hunger: 0,  photo: false },
-  { id: "sports",  emoji: "🏃", name: "しまの うんどうかい",       season: null, msg: "よーい、どん！",            happy: 24, exp: 15, bond: 12, hunger: -10, photo: true },
+  // --- きせつ ---
+  { id: "hanami",  emoji: "🌸", name: "おはなみ",                 season: 0, time: null, msg: "さくらが きれいだね！",        happy: 22, exp: 8,  bond: 6,  hunger: 10, photo: true },
+  { id: "hanabi",  emoji: "🎆", name: "はなびたいかい",           season: 1, time: "night", msg: "よぞらに はなびが あがる！",  happy: 30, exp: 5,  bond: 10, hunger: 0,  photo: true },
+  { id: "momiji",  emoji: "🍁", name: "もみじがり",               season: 2, time: null, msg: "やまが まっかだ〜！",          happy: 22, exp: 8,  bond: 6,  hunger: 0,  photo: true },
+  { id: "yuki",    emoji: "⛄", name: "ゆきまつり",               season: 3, time: null, msg: "ゆきだるまを つくろう！",      happy: 25, exp: 8,  bond: 8,  hunger: 0,  photo: true },
+  // --- こうえんの イベント（じかんで かわる）---
+  { id: "magic",   emoji: "🎩", name: "こうえんの マジックショー", season: null, time: "noon",    msg: "うわー！ どうなってるの!?",    happy: 20, exp: 12, bond: 4,  hunger: 0,  photo: false, park: true },
+  { id: "photo",   emoji: "📷", name: "カメラマンの さつえいかい", season: null, time: "morning", msg: "はい、チーズ！ 📸",           happy: 16, exp: 5,  bond: 8,  hunger: 0,  photo: true,  park: true },
+  { id: "circus",  emoji: "🎪", name: "サーカスが やってきた！",   season: null, time: "evening", msg: "ジャジャーン！ すごーい！！",  happy: 32, exp: 14, bond: 10, hunger: 0,  photo: true,  park: true },
+  { id: "play",    emoji: "🎭", name: "たびびとの げき",           season: null, time: "evening", msg: "はくしゅ〜！ ブラボー！",      happy: 24, exp: 16, bond: 8,  hunger: 0,  photo: true,  park: true },
+  { id: "dance",   emoji: "💃", name: "ダンサーの ダンスショー",   season: null, time: "night",   msg: "ノリノリで おどろう！🎵",     happy: 28, exp: 10, bond: 10, hunger: 0,  photo: true,  park: true },
+  { id: "kamishi", emoji: "📜", name: "かみしばい",               season: null, time: "evening", msg: "つづきが きになる〜！",        happy: 16, exp: 14, bond: 6,  hunger: 0,  photo: false, park: true },
+  { id: "yatai",   emoji: "🍡", name: "こうえんの やたい",         season: null, time: "night",   msg: "たこやき おいしー！",          happy: 20, exp: 4,  bond: 8,  hunger: 40, photo: true,  park: true },
+  { id: "asaichi", emoji: "🥕", name: "あさいち",                 season: null, time: "morning", msg: "しんせんな やさいだよ！",      happy: 14, exp: 4,  bond: 6,  hunger: 30, photo: false, park: true },
+  // --- しせつの イベント ---
+  { id: "dinner",  emoji: "🍽️", name: "ホテルの おしょくじかい",  season: null, time: "night",   msg: "ごうかな ディナー！",         happy: 20, exp: 5,  bond: 6,  hunger: 45, photo: true },
+  { id: "art",     emoji: "🖼️", name: "びじゅつひん かんしょうかい", season: null, time: "noon",  msg: "すてきな えだね…",             happy: 12, exp: 30, bond: 3,  hunger: 0,  photo: false },
+  { id: "sports",  emoji: "🏃", name: "しまの うんどうかい",       season: null, time: "noon",    msg: "よーい、どん！",              happy: 24, exp: 15, bond: 12, hunger: -10, photo: true },
 ];
 
 // ★ こえ（せいかくごとに たかさ・はやさが ちがう）★
@@ -391,11 +410,28 @@ const SONGS = {
 // ★ あかちゃんの ことば ★
 const BABY_LINES = ["ばぶー！", "あー うー♪", "きゃっきゃっ", "まんま〜", "にこにこ〜"];
 
-// ★ たびの てがみ ★
+// ★ たびの ゆきさき（のりもの・うちゅうも！）★
+// vehicle: どの のりもので いくか
 const TRAVEL_PLACES = [
-  "とおくの みなみの しま", "ゆきの くに", "おおきな まちの がっこう",
-  "さばくの おうこく", "うみの むこうの もり", "そらに うかぶ しま",
+  { name: "とおくの みなみの しま", emoji: "🏝️", vehicle: "ship",   coin: 150 },
+  { name: "ゆきの くに",           emoji: "🏔️", vehicle: "ship",   coin: 150 },
+  { name: "うみの むこうの もり",   emoji: "🌲", vehicle: "ship",   coin: 150 },
+  { name: "おおきな まちの がっこう", emoji: "🏙️", vehicle: "plane", coin: 200 },
+  { name: "さばくの おうこく",     emoji: "🏜️", vehicle: "plane",  coin: 200 },
+  { name: "みなみの リゾート",     emoji: "🌴", vehicle: "plane",  coin: 200 },
+  { name: "つき",                 emoji: "🌕", vehicle: "rocket", coin: 300 },
+  { name: "かせい",               emoji: "🔴", vehicle: "rocket", coin: 300 },
+  { name: "おうしざの ほし",       emoji: "⭐", vehicle: "rocket", coin: 350 },
+  { name: "オリオンだいせいうん",   emoji: "🌌", vehicle: "rocket", coin: 400 },
+  { name: "にじいろの わくせい",   emoji: "🪐", vehicle: "rocket", coin: 400 },
 ];
+
+// ★ のりもの ★
+const VEHICLES = {
+  ship:   { emoji: "⛴️", label: "ふね",       line: "ボーッ！ しゅっぱつ〜！" },
+  plane:  { emoji: "✈️", label: "ひこうき",   line: "ゴーッ！ とびたつよ〜！" },
+  rocket: { emoji: "🚀", label: "ロケット",   line: "3・2・1・はっしゃ〜！！" },
+};
 const TRAVEL_LETTERS = [
   "げんきに やってるよ！ しまの みんなに よろしく！",
   "こっちで あたらしい ともだちが できたよ！",
@@ -423,6 +459,22 @@ const HOME_SPOTS = [
 ];
 
 const MAX_RESIDENTS = HOME_SPOTS.length; // 18にん
+
+// ★★ しょくぎょう（かいしゃで はたらける）★★
+const JOBS = [
+  { id: "none",   emoji: "🙂", label: "きめてない",   pay: 0,  line: "" },
+  { id: "baker",  emoji: "🥖", label: "パンやさん",   pay: 20, line: "やきたての パン いかが？" },
+  { id: "doctor", emoji: "🩺", label: "おいしゃさん", pay: 40, line: "げんきが いちばん だよ！" },
+  { id: "farmer", emoji: "🧑‍🌾", label: "のうかさん",   pay: 22, line: "やさいが よく そだったよ！" },
+  { id: "police", emoji: "👮", label: "けいさつかん", pay: 30, line: "しまの あんぜんは まかせて！" },
+  { id: "cook",   emoji: "👨‍🍳", label: "コックさん",   pay: 28, line: "きょうの ランチは とくべつ！" },
+  { id: "teacher",emoji: "🧑‍🏫", label: "せんせい",     pay: 26, line: "みんな よく べんきょう したね！" },
+  { id: "artist", emoji: "🧑‍🎨", label: "がか",         pay: 24, line: "この いろ、きれいでしょ？" },
+  { id: "pilot",  emoji: "🧑‍✈️", label: "パイロット",   pay: 45, line: "そらの たびへ ごあんない！" },
+  { id: "idol",   emoji: "🎤", label: "アイドル",     pay: 38, line: "おうえん ありがとう〜！💕" },
+  { id: "scientist", emoji: "🧑‍🔬", label: "はかせ",   pay: 42, line: "だいはっけん だ！" },
+  { id: "fire",   emoji: "🧑‍🚒", label: "しょうぼうし", pay: 32, line: "みんなを まもるぞ！" },
+];
 
 const SAVE_KEY = "tomo-island-save-v1";
 
@@ -780,6 +832,7 @@ function TomodachiIsland() {
   const [cardErr, setCardErr] = useState("");     // カードの エラー
   const [islandName, setIslandName] = useState(DEFAULT_ISLAND_NAME); // ★ しまの なまえ
   const [naming, setNaming] = useState(false);   // なまえを つける がめん
+  const [eventShow, setEventShow] = useState(null); // ★ イベントの えんしゅつ
   const toastTimer = useRef(null);
   const prevUnlocked = useRef(0);
 
@@ -1010,28 +1063,39 @@ function TomodachiIsland() {
     document.title = `🏝️ ${islandName}`;
   }, [islandName]);
 
-  // ★ きせつ ★
+  // ★ きせつ（15にちで1きせつ）★
   const season = SEASONS[Math.floor(day / 15) % SEASONS.length];
+  // ★ じかんたい（1にちを 4つに わける：day が すすむと あさ→ひる→ゆうがた→よる）★
+  const timeOfDay = TIMES[day % TIMES.length];
 
-  // ★ イベントを はっせいさせる ★
+  // ★ イベントを はっせいさせる（いまの きせつ＆じかんに あわせて）★
   useEffect(() => {
     if (!loaded) return;
     if (activeEvent) return;
     if (residents.length === 0) return;
     const iv = setInterval(() => {
-      if (Math.random() < 0.3) {
-        // きせつに あった イベントが でやすい
-        const seasonal = EVENTS.filter((e) => e.season === season.id);
-        const anytime = EVENTS.filter((e) => e.season === null);
-        const poolArr = Math.random() < 0.55 && seasonal.length > 0 ? seasonal : anytime;
-        const e = pick(poolArr);
+      if (Math.random() < 0.35) {
+        // いまの じかんに あう イベントを ゆうせん
+        const fitTime = (e) => e.time === null || e.time === timeOfDay.id;
+        const fitSeason = (e) => e.season === null || e.season === season.id;
+        // ①いまの きせつ＆じかんに ぴったり
+        let pool = EVENTS.filter((e) => fitTime(e) && (e.season === season.id));
+        // ②じかんだけ あう（いつでも きせつ）
+        if (pool.length === 0 || Math.random() < 0.6) {
+          pool = EVENTS.filter((e) => fitTime(e) && e.season === null);
+        }
+        // ③それでも なければ なんでも
+        if (pool.length === 0) pool = EVENTS.filter((e) => e.season === null);
+        if (pool.length === 0) return;
+        const e = pick(pool);
         setActiveEvent({ ...e, ticksLeft: 6, joined: false });
-        addLog(`${e.emoji} ${season.emoji}${season.label}の イベント：「${e.name}」が はじまった！`);
+        const where = e.park ? "こうえんで" : "";
+        addLog(`${e.emoji} ${timeOfDay.emoji}${timeOfDay.label}、${where}「${e.name}」が はじまった！`);
         showToast(`${e.emoji} ${e.name}が はじまったよ！`);
       }
-    }, 24000);
+    }, 20000);
     return () => clearInterval(iv);
-  }, [loaded, activeEvent, residents.length, season, addLog, showToast]);
+  }, [loaded, activeEvent, residents.length, season, timeOfDay, addLog, showToast]);
 
   // ★ じゅうみんが ふえて おみせが できたら おしらせ ★
   const unlockedBuildings = BUILDINGS.filter((b) => residents.length >= b.unlockAt);
@@ -1243,22 +1307,61 @@ function TomodachiIsland() {
   };
 
   // ★ たびだち ★
-  const travel = (id) => {
+  const travel = (id, dest) => {
     const r = residents.find((x) => x.id === id);
     if (!r) return;
-    const place = pick(TRAVEL_PLACES);
+    const place = dest || pick(TRAVEL_PLACES);
+    const veh = VEHICLES[place.vehicle] || VEHICLES.ship;
+    const reward = place.coin || 150;
     stopSpeaking();
-    speakAs(r, "いってきます！ げんきでね！");
-    setTravelers((ts) => [{ id: r.id, name: r.name, avatar: r.avatar, place, at: Date.now() }, ...ts].slice(0, 20));
+    speakAs(r, veh.line);
+    setTravelers((ts) => [{
+      id: r.id, name: r.name, avatar: r.avatar,
+      place: place.name, placeEmoji: place.emoji, vehicle: place.vehicle, vehicleEmoji: veh.emoji,
+      at: Date.now(),
+    }, ...ts].slice(0, 20));
     setResidents((rs) => rs
       .filter((x) => x.id !== r.id)
       .map((x) => (x.partnerId === r.id ? { ...x, partnerId: null, married: false } : x))
     );
-    setCoins((c) => c + 150);
-    addLog(`⛴️ ${r.name}が「${place}」へ たびに でた！（+150🪙）`);
-    showToast(`⛴️ ${r.name}、いってらっしゃい！`);
+    setCoins((c) => c + reward);
+    addLog(`${veh.emoji} ${r.name}が ${veh.label}で「${place.emoji}${place.name}」へ たびに でた！（+${reward}🪙）`);
+    showToast(`${veh.emoji} ${r.name}、いってらっしゃい！`);
     setSelectedId(null);
     setBuilding(null);
+  };
+
+  // ★★ しごとを する（かいしゃで はたらく）★★
+  const doJob = (id) => {
+    const r = residents.find((x) => x.id === id);
+    if (!r) return;
+    if (r.job === "none" || !r.job) { showToast("さきに おしごとを えらんでね！"); return; }
+    if (!r.workReady) { showToast(`${r.name}は やすみちゅう… また あとでね`); return; }
+    const job = JOBS.find((j) => j.id === r.job) || JOBS[0];
+    const earn = job.pay + rand(10);
+    setCoins((c) => c + earn);
+    updateResident(id, (x) => ({ ...x, workReady: false, happiness: clamp(x.happiness + 6, 0, 100) }));
+    gainExp(id, 12);
+    stopSpeaking();
+    speakAs(r, job.line);
+    addLog(`${job.emoji} ${r.name}が ${job.label}の おしごとを した！（+${earn}🪙）`);
+    showToast(`${job.emoji} おしごと かんりょう！ +${earn}コイン`);
+    // すこし じかんが たつと また はたらける
+    setTimeout(() => updateResident(id, (x) => ({ ...x, workReady: true })), 22000);
+  };
+
+  // ★ しょくぎょうを えらぶ ★
+  const setJob = (id, jobId) => {
+    const r = residents.find((x) => x.id === id);
+    const job = JOBS.find((j) => j.id === jobId);
+    if (!r || !job) return;
+    updateResident(id, (x) => ({ ...x, job: jobId }));
+    if (jobId !== "none") {
+      stopSpeaking();
+      speakAs(r, `わたし、${job.label}に なる！`);
+      addLog(`${job.emoji} ${r.name}が ${job.label}に なった！`);
+      showToast(`${job.emoji} ${r.name}は ${job.label}に なったよ！`);
+    }
   };
 
   // ★★ しんがく ★★
@@ -1324,8 +1427,9 @@ function TomodachiIsland() {
     const someone = pick(residents);
     speakAs(someone, e.msg);
     setActiveEvent({ ...e, joined: true });
+    // ★ えんしゅつを ひらく（じゅうみんの みために）★
+    setEventShow({ event: e, members: residents.slice(0, 6).map((r) => r.avatar) });
     addLog(`${e.emoji} みんなで「${e.name}」に さんかした！ ${e.msg}`);
-    showToast(`${e.emoji} ${e.msg}`);
   };
 
   // ★★ たびびと ★★
@@ -1601,6 +1705,73 @@ function TomodachiIsland() {
         @keyframes tomoAlert { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.1); } }
         .tomo-cloud { animation: tomoCloud 40s linear infinite; }
         @keyframes tomoCloud { from { transform: translateX(-120px); } to { transform: translateX(110vw); } }
+
+        /* ===== ★ イベントの えんしゅつ ★ ===== */
+        @keyframes evFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes evStageIn { from { transform: scale(0.7) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        /* はなび */
+        @keyframes evFirework {
+          0% { transform: scale(0); opacity: 0; }
+          25% { transform: scale(0.4); opacity: 1; }
+          70% { transform: scale(1.15); opacity: 1; }
+          100% { transform: scale(1.35); opacity: 0; }
+        }
+        /* ふる パーティクル（はな・ゆき・はっぱ） */
+        @keyframes evFall {
+          0% { transform: translateY(-12vh) rotate(0deg); opacity: 0; }
+          10% { opacity: 1; }
+          100% { transform: translateY(112vh) rotate(360deg); opacity: 0.9; }
+        }
+        /* まいあがる（コンフェッティ） */
+        @keyframes evRise {
+          0% { transform: translateY(60vh) rotate(0); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: translateY(-20vh) rotate(540deg); opacity: 0; }
+        }
+        /* きらきら */
+        @keyframes evSparkle {
+          0%, 100% { transform: scale(0.4); opacity: 0.2; }
+          50% { transform: scale(1.2); opacity: 1; }
+        }
+        /* スポットライトが ゆれる */
+        @keyframes evSpot {
+          0%, 100% { transform: rotate(-16deg); }
+          50% { transform: rotate(16deg); }
+        }
+        /* ぴょんぴょん（しゅつえんしゃ） */
+        @keyframes evStar {
+          0%, 100% { transform: translateY(0) rotate(-4deg); }
+          50% { transform: translateY(-18px) rotate(4deg); }
+        }
+        /* カメラの フラッシュ */
+        @keyframes evFlash {
+          0%, 100% { opacity: 0; }
+          6% { opacity: 0.9; }
+          12% { opacity: 0; }
+        }
+        /* まくが ひらく */
+        @keyframes evCurtainL { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        @keyframes evCurtainR { from { transform: translateX(0); } to { transform: translateX(100%); } }
+        /* ディスコの ライト */
+        @keyframes evDisco {
+          0% { background: rgba(255,80,120,0.35); }
+          33% { background: rgba(120,80,255,0.35); }
+          66% { background: rgba(80,220,255,0.35); }
+          100% { background: rgba(255,80,120,0.35); }
+        }
+        /* ゆれる（ダンス） */
+        @keyframes evDance {
+          0%, 100% { transform: rotate(-12deg) translateY(0); }
+          50% { transform: rotate(12deg) translateY(-8px); }
+        }
+        /* よこに ながれる（サーカスの たま） */
+        @keyframes evJuggle {
+          0% { transform: translate(-40px,0); }
+          50% { transform: translate(40px,-40px); }
+          100% { transform: translate(-40px,0); }
+        }
+        .ev-particle { position: absolute; will-change: transform; pointer-events: none; }
+
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
         button:focus-visible { outline: 3px solid #FF8FA3; outline-offset: 2px; }
       `}</style>
@@ -1722,10 +1893,10 @@ function TomodachiIsland() {
           padding: "5px 12px", marginBottom: 10, boxShadow: "0 3px 0 #4A4238",
         }}>
           <span style={{ fontSize: 13, fontWeight: 900 }}>
-            {season.emoji} {season.label} ／ しまの {day}にちめ
+            {timeOfDay.emoji}{timeOfDay.label} ／ {season.emoji}{season.label} ／ {day}にちめ
           </span>
           <span style={{ fontSize: 11, fontWeight: 700, color: "#8A7E6E" }}>
-            📷 しゃしん {photos.length}まい
+            📷 {photos.length}まい
           </span>
         </div>
 
@@ -1748,9 +1919,13 @@ function TomodachiIsland() {
                     : `いま かいさいちゅう！ ごきげん+${activeEvent.happy}`}
                 </div>
               </div>
-              {!activeEvent.joined && (
+              {!activeEvent.joined ? (
                 <ChunkyButton small color="#FFD666" onClick={joinEvent}>
                   🎉 さんかする
+                </ChunkyButton>
+              ) : (
+                <ChunkyButton small color="#C7B8F5" onClick={() => setEventShow({ event: activeEvent, members: residents.slice(0, 6).map((r) => r.avatar) })}>
+                  ▶ もういちど みる
                 </ChunkyButton>
               )}
             </div>
@@ -1787,6 +1962,7 @@ function TomodachiIsland() {
             onVisitor={() => setBuilding("visitor")}
             onHouse={(spot) => setHouseSpot(spot)}
             islandName={islandName}
+            timeOfDay={timeOfDay}
           />
         )}
 
@@ -1988,6 +2164,15 @@ function TomodachiIsland() {
         </Modal>
       )}
 
+      {/* ===== ★★ イベントの えんしゅつ ★★ ===== */}
+      {eventShow && (
+        <EventShow
+          event={eventShow.event}
+          members={eventShow.members}
+          onClose={() => setEventShow(null)}
+        />
+      )}
+
       {/* ===== ★★ しまの なまえを つける ★★ ===== */}
       {naming && (
         <Modal onClose={() => setNaming(false)}>
@@ -2113,6 +2298,8 @@ function TomodachiIsland() {
             onMarry={marry}
             onTravel={travel}
             onEnroll={enroll}
+            onDoJob={doJob}
+            onSetJob={setJob}
             cardOut={cardOut}
             cardIn={cardIn}
             setCardIn={setCardIn}
@@ -2200,6 +2387,14 @@ function ResidentRoom({ r, bubble, friends, picker, setPicker, coins, onFeed, on
           <div style={{ fontSize: 12, fontWeight: 800, color: "#4A4238", marginTop: 2 }}>
             {stageOf(r.age ?? 22).emoji} {stageOf(r.age ?? 22).label} ／ {Math.floor(r.age ?? 22)}さい
           </div>
+          {r.job && r.job !== "none" && (() => {
+            const job = JOBS.find((j) => j.id === r.job);
+            return job ? (
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#4A6B80", marginTop: 2 }}>
+                {job.emoji} {job.label}（🏢で はたらけるよ）
+              </div>
+            ) : null;
+          })()}
           {partner && (
             <div style={{ fontSize: 12, fontWeight: 800, color: "#E86AA6", marginTop: 2 }}>
               {r.married ? "💍 けっこん" : "💞 こいびと"}：{partner.name}
@@ -2361,7 +2556,7 @@ const ACTIVITIES = [
   "かいがらを さがしてる🐚", "ひなたぼっこ ちゅう☀️",
 ];
 
-function IslandView({ residents, onSelect, onAdd, onBuilding, workReady, objects, editMode, onPlaceObject, onRemoveObject, onLocked, season, visitor, onVisitor, onHouse, islandName }) {
+function IslandView({ residents, onSelect, onAdd, onBuilding, workReady, objects, editMode, onPlaceObject, onRemoveObject, onLocked, season, visitor, onVisitor, onHouse, islandName, timeOfDay }) {
   const [pos, setPos] = useState({});
   const [act, setAct] = useState({});
   const [talker, setTalker] = useState(null);
@@ -2434,13 +2629,33 @@ function IslandView({ residents, onSelect, onAdd, onBuilding, workReady, objects
       onClick={handleIslandClick}
       style={{
         position: "relative",
-        width: "300%",      // ★ よこ3ばい
-        paddingTop: "300%", // ★ たて3ばい（＝ひろさ 9ばい！）
-        background: `linear-gradient(180deg, ${season.sky} 0%, #4FA8D8 100%)`,
+        width: "300%",
+        paddingTop: "300%",
+        background: `linear-gradient(180deg, ${timeOfDay.sky} 0%, #4FA8D8 100%)`,
         cursor: editMode ? "crosshair" : "default",
       }}
     >
     <div style={{ position: "absolute", inset: 0 }}>
+      {timeOfDay.overlay !== "rgba(255,255,255,0.0)" && (
+        <div style={{
+          position: "absolute", inset: 0, background: timeOfDay.overlay,
+          pointerEvents: "none", zIndex: 1,
+        }} />
+      )}
+      {timeOfDay.id === "night" && (
+        <>
+          <span style={{ position: "absolute", right: "12%", top: "6%", fontSize: 26, zIndex: 1 }}>🌙</span>
+          <span style={{ position: "absolute", left: "20%", top: "8%", fontSize: 12, zIndex: 1 }}>⭐</span>
+          <span style={{ position: "absolute", left: "40%", top: "5%", fontSize: 10, zIndex: 1 }}>✨</span>
+          <span style={{ position: "absolute", left: "60%", top: "10%", fontSize: 11, zIndex: 1 }}>⭐</span>
+        </>
+      )}
+      {timeOfDay.id === "morning" && (
+        <span style={{ position: "absolute", right: "14%", top: "7%", fontSize: 26, zIndex: 1 }}>🌅</span>
+      )}
+      {timeOfDay.id === "evening" && (
+        <span style={{ position: "absolute", right: "14%", top: "7%", fontSize: 26, zIndex: 1 }}>🌇</span>
+      )}
       {/* うみのかざり */}
       <span style={{ position: "absolute", left: "4%", top: "5%", fontSize: 16, opacity: 0.8 }}>🌊</span>
       <span style={{ position: "absolute", right: "5%", top: "10%", fontSize: 16, opacity: 0.8 }}>🌊</span>
@@ -2721,6 +2936,7 @@ const INTERIORS = {
   hotel:   { wall: "#FFE9F3", floor: "#B98AA0", welcome: "ようこそ しまホテルへ 🏨" },
   museum:  { wall: "#E9F7E5", floor: "#8FA98A", welcome: "おしずかに… 🖼️" },
   post:    { wall: "#FFE0E6", floor: "#C98B9B", welcome: "よその しまへ おとどけ！ 📮" },
+  company: { wall: "#DCEBF8", floor: "#8FA9C4", welcome: "きょうも おしごと がんばろう！ 🏢" },
 };
 
 function InteriorRoom({ building, visitors }) {
@@ -2996,6 +3212,29 @@ function InteriorRoom({ building, visitors }) {
         </>
       )}
 
+      {/* ===== しまカンパニー ===== */}
+      {building === "company" && (
+        <>
+          <span style={{ position: "absolute", top: 10, left: 12, fontSize: 20 }}>💼</span>
+          <span style={{ position: "absolute", top: 12, right: 14, fontSize: 20 }}>📊</span>
+          {/* まどの ビル */}
+          <div style={{ position: "absolute", top: 30, left: 12, right: 12, display: "flex", justifyContent: "space-around" }}>
+            {[0,1,2,3,4].map((i) => (
+              <div key={i} style={{ width: 16, height: 20, background: "#FFF6C9", border: "2px solid #4A4238", borderRadius: 2 }} />
+            ))}
+          </div>
+          {/* デスク */}
+          <div style={{
+            position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
+            width: 120, height: 40, background: "#8B5E3C",
+            border: "3px solid #4A4238", borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 20,
+          }}>
+            💻 📎 ☕
+          </div>
+        </>
+      )}
+
       {/* いま なかに いる じゅうみん */}
       <div style={{
         position: "absolute", bottom: 4, left: 10,
@@ -3018,7 +3257,7 @@ function InteriorRoom({ building, visitors }) {
   );
 }
 
-function BuildingPanel({ building, residents, relations, travelers, coins, workReady, onWork, onCafe, onLibrary, onParty, onConcert, onIce, onMarry, onTravel, onEnroll, cardOut, cardIn, setCardIn, onMakeCard, onCopyCard, onReceiveCard, onPasteCard, cardErr, onExportIsland, onImportIsland, onOpenResident }) {
+function BuildingPanel({ building, residents, relations, travelers, coins, workReady, onWork, onCafe, onLibrary, onParty, onConcert, onIce, onMarry, onTravel, onEnroll, onDoJob, onSetJob, cardOut, cardIn, setCardIn, onMakeCard, onCopyCard, onReceiveCard, onPasteCard, cardErr, onExportIsland, onImportIsland, onOpenResident }) {
   const b = BUILDINGS.find((x) => x.id === building);
 
   // なかに いる じゅうみんは ひらいた ときに きまる（チラチラしない）
@@ -3256,18 +3495,44 @@ function BuildingPanel({ building, residents, relations, travelers, coins, workR
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   <Avatar av={r.avatar} size={44} bounce />
-                  <div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 900, fontSize: 15 }}>{r.name}</div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#8A7E6E" }}>
-                      {Math.floor(r.age)}さい ／ Lv.{r.level} ／ たびの じゅんび OK！
+                      {Math.floor(r.age)}さい ／ Lv.{r.level} ／ どこへ いく？
                     </div>
                   </div>
                 </div>
-                <div style={{ textAlign: "center" }}>
-                  <ChunkyButton color="#8FC3F7" onClick={() => onTravel(r.id)}>
-                    ⛴️ たびに おくりだす（+150🪙）
-                  </ChunkyButton>
-                </div>
+
+                {/* ★ のりもの べつ ゆきさき ★ */}
+                {["ship", "plane", "rocket"].map((vk) => {
+                  const veh = VEHICLES[vk];
+                  const places = TRAVEL_PLACES.filter((pl) => pl.vehicle === vk);
+                  return (
+                    <div key={vk} style={{ marginBottom: 6 }}>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: "#4A6B80", marginBottom: 3 }}>
+                        {veh.emoji} {veh.label}で いく
+                      </div>
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                        {places.map((pl) => (
+                          <button
+                            key={pl.name}
+                            onClick={() => onTravel(r.id, pl)}
+                            style={{
+                              fontFamily: "inherit", fontWeight: 800, fontSize: 11,
+                              padding: "6px 9px", borderRadius: 12,
+                              border: "2px solid #4A4238",
+                              background: vk === "rocket" ? "#EDE0FA" : (vk === "plane" ? "#E0F0FF" : "#E6F7F2"),
+                              cursor: "pointer", color: "#4A4238",
+                            }}
+                          >
+                            {pl.emoji} {pl.name}<br />
+                            <span style={{ fontSize: 9, color: "#8A7E6E" }}>+{pl.coin}🪙</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ))}
 
@@ -3281,8 +3546,8 @@ function BuildingPanel({ building, residents, relations, travelers, coins, workR
                   }}>
                     <Avatar av={t.avatar} size={26} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, fontSize: 12 }}>{t.name}</div>
-                      <div style={{ fontSize: 10, color: "#8A6D00" }}>📍 {t.place}</div>
+                      <div style={{ fontWeight: 800, fontSize: 12 }}>{t.vehicleEmoji || "⛴️"} {t.name}</div>
+                      <div style={{ fontSize: 10, color: "#8A6D00" }}>{t.placeEmoji || "📍"} {t.place}</div>
                     </div>
                     <span style={{ fontSize: 16 }}>💌</span>
                   </div>
@@ -3588,6 +3853,77 @@ function BuildingPanel({ building, residents, relations, travelers, coins, workR
         </>
       )}
 
+      {/* ★★ しまカンパニー（しごと・しょくぎょう）★★ */}
+      {building === "company" && (() => {
+        const workers = residents.filter((r) => !r.isBaby && (r.age ?? 22) >= 15);
+        return (
+          <>
+            <p style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.6, margin: "0 0 12px", color: "#6B5F50" }}>
+              じゅうみんに <b>おしごと</b>を えらんで、はたらいて もらおう！<br />
+              おしごとで コインが もらえるよ 💰
+            </p>
+
+            {workers.length === 0 && (
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#8A7E6E", lineHeight: 1.7 }}>
+                まだ はたらける じゅうみんが いないよ。<br />
+                （15さい いじょうに なると はたらけるよ）
+              </div>
+            )}
+
+            {workers.map((r) => {
+              const job = JOBS.find((j) => j.id === (r.job || "none")) || JOBS[0];
+              return (
+                <div key={r.id} style={{
+                  background: "#FFFDF5", border: "3px solid #4A4238", borderRadius: 16,
+                  padding: 10, marginBottom: 8,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <Avatar av={r.avatar} size={38} bounce />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 900, fontSize: 14 }}>{r.name}</div>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: "#4A6B80" }}>
+                        {job.emoji} {job.label}
+                        {job.id !== "none" && ` ／ 1かい +${job.pay}🪙〜`}
+                      </div>
+                    </div>
+                    {job.id !== "none" && (
+                      <ChunkyButton
+                        small
+                        color={r.workReady ? "#FFD666" : "#DDD5C8"}
+                        disabled={!r.workReady}
+                        onClick={() => onDoJob(r.id)}
+                      >
+                        {r.workReady ? "💼 はたらく" : "😴 やすみ"}
+                      </ChunkyButton>
+                    )}
+                  </div>
+
+                  {/* しょくぎょうを えらぶ */}
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {JOBS.filter((j) => j.id !== "none").map((j) => (
+                      <button
+                        key={j.id}
+                        onClick={() => onSetJob(r.id, j.id)}
+                        title={j.label}
+                        style={{
+                          fontFamily: "inherit", fontSize: 17, lineHeight: 1,
+                          padding: "5px 6px", cursor: "pointer",
+                          border: r.job === j.id ? "3px solid #4A4238" : "2px solid #E0D6C6",
+                          borderRadius: 10,
+                          background: r.job === j.id ? "#FFD666" : "#FFFDF5",
+                        }}
+                      >
+                        {j.emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        );
+      })()}
+
       {/* ★ アイスやさん ★ */}
       {building === "ice" && (
         <>
@@ -3633,6 +3969,181 @@ function FacilityPick({ note, residents, coins, cost, onPick, actionLabel }) {
         ))}
       </div>
     </>
+  );
+}
+
+// ============ ★★ イベントの えんしゅつ（アニメーション）★★ ============
+// たくさんの パーティクルを つくる ヘルパー
+function particles(n, render) {
+  const arr = [];
+  for (let i = 0; i < n; i++) arr.push(render(i));
+  return arr;
+}
+
+function EventShow({ event, members, onClose }) {
+  const e = event;
+  // 4びょうで じどうで とじる
+  useEffect(() => {
+    const t = setTimeout(onClose, 4200);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  // イベントごとの はいけい
+  const bgById = {
+    hanabi:  "radial-gradient(circle at 50% 40%, #223 0%, #0a0a22 100%)",
+    dance:   "#14082a",
+    yatai:   "radial-gradient(circle at 50% 30%, #3a2a5a 0%, #14082a 100%)",
+    circus:  "radial-gradient(circle at 50% 35%, #4a1030 0%, #1a0818 100%)",
+    play:    "#2a1a10",
+    kamishi: "#2a1a10",
+    magic:   "radial-gradient(circle at 50% 40%, #2a1a4a 0%, #100a22 100%)",
+    photo:   "#3a5a7a",
+    dinner:  "radial-gradient(circle at 50% 40%, #3a2a1a 0%, #1a1008 100%)",
+    art:     "#5a5548",
+    sports:  "#7EC8E3",
+    hanami:  "linear-gradient(180deg,#BFE3F5,#FFD6E8)",
+    momiji:  "linear-gradient(180deg,#F5D9B0,#D98C4A)",
+    yuki:    "linear-gradient(180deg,#DCEBF5,#A8C4D8)",
+    asaichi: "linear-gradient(180deg,#FFE0B8,#A8DE93)",
+  };
+  const bg = bgById[e.id] || "radial-gradient(circle at 50% 40%, #2a3a5a 0%, #12203a 100%)";
+  const dark = ["hanabi","dance","yatai","circus","play","kamishi","magic","dinner"].includes(e.id);
+  const textColor = dark ? "#fff" : "#4A4238";
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 200, cursor: "pointer",
+        background: bg, overflow: "hidden",
+        animation: "evFadeIn 0.35s ease-out",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "flex-end",
+      }}
+    >
+      {/* ===== イベントべつの えんしゅつ ===== */}
+
+      {/* 🎆 はなび */}
+      {e.id === "hanabi" && particles(9, (i) => (
+        <div key={i} className="ev-particle" style={{
+          left: `${8 + (i * 10) % 84}%`, top: `${10 + (i * 17) % 45}%`,
+          fontSize: 46 + (i % 3) * 18,
+          animation: `evFirework 1.6s ease-out ${(i * 0.35) % 2}s infinite`,
+        }}>{["🎆","🎇","✨"][i % 3]}</div>
+      ))}
+
+      {/* 🌸 おはなみ / 🍁 もみじ / ⛄ ゆき：ふる パーティクル */}
+      {(e.id === "hanami" || e.id === "momiji" || e.id === "yuki") && particles(24, (i) => (
+        <div key={i} className="ev-particle" style={{
+          left: `${(i * 4.3) % 100}%`, top: 0, fontSize: 16 + (i % 4) * 8,
+          animation: `evFall ${3 + (i % 5) * 0.6}s linear ${(i * 0.2) % 3}s infinite`,
+        }}>{e.id === "hanami" ? "🌸" : e.id === "momiji" ? "🍁" : "❄️"}</div>
+      ))}
+
+      {/* 🎩 マジック：きらきら＋うさぎ */}
+      {e.id === "magic" && (
+        <>
+          {particles(16, (i) => (
+            <div key={i} className="ev-particle" style={{
+              left: `${(i * 6.3) % 96}%`, top: `${(i * 13) % 70}%`, fontSize: 20 + (i % 3) * 10,
+              animation: `evSparkle ${1 + (i % 4) * 0.4}s ease-in-out ${(i * 0.15) % 2}s infinite`,
+            }}>{["✨","⭐","💫","🌟"][i % 4]}</div>
+          ))}
+          <div className="ev-particle" style={{ left: "50%", top: "34%", marginLeft: -30, fontSize: 60, animation: "evStar 1.2s ease-in-out infinite" }}>🎩</div>
+          <div className="ev-particle" style={{ left: "50%", top: "26%", marginLeft: 6, fontSize: 34, animation: "evStar 1.2s ease-in-out 0.2s infinite" }}>🐰</div>
+        </>
+      )}
+
+      {/* 🎪 サーカス：スポットライト＋ジャグリング */}
+      {e.id === "circus" && (
+        <>
+          <div style={{ position: "absolute", top: "-8%", left: "24%", width: 4, height: "70%", transformOrigin: "top center", background: "linear-gradient(180deg,rgba(255,240,150,0.5),transparent)", animation: "evSpot 3s ease-in-out infinite" }} />
+          <div style={{ position: "absolute", top: "-8%", right: "24%", width: 4, height: "70%", transformOrigin: "top center", background: "linear-gradient(180deg,rgba(255,200,240,0.5),transparent)", animation: "evSpot 3s ease-in-out 0.6s infinite reverse" }} />
+          <div className="ev-particle" style={{ left: "50%", top: "20%", marginLeft: -34, fontSize: 68 }}>🎪</div>
+          {particles(3, (i) => (
+            <div key={i} className="ev-particle" style={{ left: `${40 + i * 8}%`, top: "44%", fontSize: 26, animation: `evJuggle ${1 + i * 0.2}s ease-in-out infinite` }}>{["🔴","🟡","🔵"][i]}</div>
+          ))}
+          <div className="ev-particle" style={{ left: "30%", top: "40%", fontSize: 40, animation: "evStar 1s ease-in-out infinite" }}>🤹</div>
+          <div className="ev-particle" style={{ left: "62%", top: "42%", fontSize: 36 }}>🐘</div>
+        </>
+      )}
+
+      {/* 🎭 げき / 📜 かみしばい：まくが ひらく */}
+      {(e.id === "play" || e.id === "kamishi") && (
+        <>
+          <div style={{ position: "absolute", top: 0, left: 0, width: "50%", height: "100%", background: "linear-gradient(90deg,#8a1030,#c01840)", borderRight: "4px solid #FFD666", animation: "evCurtainL 1.4s ease-in-out 0.3s forwards" }} />
+          <div style={{ position: "absolute", top: 0, right: 0, width: "50%", height: "100%", background: "linear-gradient(270deg,#8a1030,#c01840)", borderLeft: "4px solid #FFD666", animation: "evCurtainR 1.4s ease-in-out 0.3s forwards" }} />
+          <div className="ev-particle" style={{ left: "50%", top: "30%", marginLeft: -28, fontSize: 60, animation: "evStar 1.2s ease-in-out 1.5s infinite" }}>{e.id === "kamishi" ? "📜" : "🎭"}</div>
+          <div style={{ position: "absolute", top: "-6%", left: "50%", marginLeft: -3, width: 6, height: "48%", transformOrigin: "top", background: "linear-gradient(180deg,rgba(255,240,150,0.55),transparent)", animation: "evSpot 3s ease-in-out infinite" }} />
+        </>
+      )}
+
+      {/* 💃 ダンス：ディスコ */}
+      {e.id === "dance" && (
+        <>
+          <div style={{ position: "absolute", inset: 0, animation: "evDisco 1.2s linear infinite" }} />
+          {particles(10, (i) => (
+            <div key={i} className="ev-particle" style={{ left: `${(i * 9.5) % 92}%`, top: `${(i * 21) % 60}%`, fontSize: 22, animation: `evSparkle ${0.8 + (i % 3) * 0.3}s ease-in-out ${(i*0.1)%1}s infinite` }}>{["🎵","🎶","✨","💫"][i % 4]}</div>
+          ))}
+          <div className="ev-particle" style={{ left: "38%", top: "40%", fontSize: 52, animation: "evDance 0.6s ease-in-out infinite" }}>💃</div>
+          <div className="ev-particle" style={{ left: "54%", top: "40%", fontSize: 52, animation: "evDance 0.6s ease-in-out 0.3s infinite" }}>🕺</div>
+        </>
+      )}
+
+      {/* 📷 カメラマン：フラッシュ */}
+      {e.id === "photo" && (
+        <>
+          <div style={{ position: "absolute", inset: 0, background: "#fff", animation: "evFlash 1.6s ease-out infinite" }} />
+          <div className="ev-particle" style={{ left: "50%", top: "30%", marginLeft: -30, fontSize: 60, animation: "evStar 1.5s ease-in-out infinite" }}>📷</div>
+          {particles(6, (i) => (
+            <div key={i} className="ev-particle" style={{ left: `${15 + i * 13}%`, top: `${20 + (i%2)*8}%`, fontSize: 20, animation: `evSparkle 1s ease-in-out ${i*0.2}s infinite` }}>✨</div>
+          ))}
+        </>
+      )}
+
+      {/* 🎆 デフォルト：まいあがる コンフェッティ（そのほか）*/}
+      {["dinner","art","sports","asaichi","yatai"].includes(e.id) && particles(18, (i) => (
+        <div key={i} className="ev-particle" style={{
+          left: `${(i * 5.5) % 100}%`, bottom: 0, fontSize: 16 + (i % 3) * 8,
+          animation: `evRise ${2.5 + (i % 4) * 0.5}s ease-out ${(i * 0.15) % 2}s infinite`,
+        }}>{["🎉","🎊","⭐","🍡","🎈","✨"][i % 6]}</div>
+      ))}
+
+      {/* ===== まんなかの おおきな えもじ ＆ しゅつえんしゃ ===== */}
+      <div style={{
+        position: "relative", zIndex: 2, textAlign: "center", marginBottom: "22vh",
+        animation: "evStageIn 0.6s cubic-bezier(.2,1.4,.4,1)",
+      }}>
+        <div style={{ fontSize: 92, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" }}>{e.emoji}</div>
+
+        {/* しゅつえんしゃ（じゅうみん）が ならんで みている */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 2, marginTop: 4 }}>
+          {members.slice(0, 6).map((av, i) => (
+            <div key={i} style={{ animation: `evStar ${0.9 + (i % 3) * 0.2}s ease-in-out ${i * 0.1}s infinite` }}>
+              <Avatar av={av} size={40} shadow={false} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ===== したの ふきだし ===== */}
+      <div style={{
+        position: "relative", zIndex: 3, marginBottom: "8vh",
+        background: "rgba(255,253,245,0.96)", border: "4px solid #4A4238",
+        borderRadius: 22, padding: "12px 22px", maxWidth: "88%",
+        boxShadow: "0 6px 0 rgba(0,0,0,0.3)", animation: "evStageIn 0.6s 0.2s backwards",
+      }}>
+        <div style={{ fontSize: 18, fontWeight: 900, color: "#4A4238", textAlign: "center" }}>
+          {e.emoji} {e.name}
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "#E86AA6", textAlign: "center", marginTop: 4 }}>
+          「{e.msg}」
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#8A7E6E", textAlign: "center", marginTop: 8 }}>
+          （タップで とじる）
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -3764,6 +4275,8 @@ function CreateForm({ onCreate, onCancel }) {
       voiceSeed: voiceSeed,          // ★ こえの こせい
       age: 22,                       // さいしょから おとな
       schoolLevel: 6,                // だいがくまで そつぎょうずみ
+      job: "none",                   // ★ しょくぎょう
+      workReady: true,               // ★ はたらける じょうたい
       partnerId: null,               // こいびと／けっこん あいて
       married: false,
       isBaby: false,
